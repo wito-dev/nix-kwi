@@ -1,0 +1,59 @@
+name: Update from upstream master
+
+on:
+  schedule:
+    # Kwi is pre-release, so follow master once a day.
+    - cron: "23 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache
+          df -h /
+
+      - name: Bump the Kwi pin
+        run: nix flake update kwi-src
+
+      - name: Build
+        run: nix build .#kwi --print-build-logs --no-link
+
+      - name: Push the new lock file
+        run: |
+          if git diff --quiet -- flake.lock; then
+            echo "Upstream master is unchanged." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          rev=$(jq -r '.nodes["kwi-src"].locked.rev' flake.lock)
+          short=$(printf '%s' "$rev" | cut -c1-10)
+          version=$(nix eval --raw .#kwi.version)
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add flake.lock
+          git commit -m "kwi: update upstream master to ${short} (${version})"
+          git push
+
+          {
+            echo "Updated Kwi to \`${rev}\`."
+            echo
+            echo "https://invent.kde.org/utilities/kwi/-/commits/master"
+          } >> "$GITHUB_STEP_SUMMARY"

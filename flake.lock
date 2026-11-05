@@ -1,0 +1,44 @@
+{
+  "nodes": {
+    "kwi-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793824530,
+        "narHash": "sha256-1O/lsPQxFKdg+0A3F/RHiljEXvneo6nHpeQTkFhrqZ4=",
+        "ref": "refs/heads/master",
+        "rev": "db0ecd3414006b3a8401c991c193804b8bbb313a",
+        "revCount": 68,
+        "type": "git",
+        "url": "https://invent.kde.org/utilities/kwi.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "https://invent.kde.org/utilities/kwi.git"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1793726008,
+        "narHash": "sha256-jQp1wKvbwWdLBASTXkSi/VYmDJ5AbBi1WvcMt9HWJC8=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "1d060086d60cb76a40cf37109f979d88a5bd6396",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "kwi-src": "kwi-src",
+        "nixpkgs": "nixpkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
