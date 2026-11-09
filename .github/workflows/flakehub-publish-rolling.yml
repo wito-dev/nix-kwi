@@ -14,6 +14,11 @@ jobs:
         with:
           persist-credentials: false
       - uses: "DeterminateSystems/determinate-nix-action@v3"
+      - uses: "DeterminateSystems/flakehub-cache-action@v3"
+        with:
+          flakehub-flake-name: "wito/nix-kwi"
+      - name: "Build"
+        run: "nix build .#kwi --print-build-logs --no-link"
       - uses: "DeterminateSystems/flakehub-push@main"
         with:
           name: "wito/nix-kwi"
