@@ -11,24 +11,20 @@
   };
 
   outputs =
-    { self, nixpkgs, kwi-src }:
+    {
+      self,
+      nixpkgs,
+      kwi-src,
+    }:
     let
       systems = [ "x86_64-linux" ];
 
-      # Kwi needs libghostty-vt 1.4.0 or newer, but nixpkgs still pins the
-      # library to an older Ghostty snapshot. Rebuild the VT library from the
-      # Ghostty release that nixpkgs packages, with the Zig version that
-      # Ghostty 1.4.0 requires.
-      overrideLibghosttyVt =
-        pkgs:
-        pkgs.libghostty-vt.overrideAttrs (old: {
-          version = pkgs.ghostty.version;
-          src = pkgs.ghostty.src;
-          deps = pkgs.ghostty.deps;
-          nativeBuildInputs = map (
-            pkg: if (pkg.pname or null) == "zig" then pkgs.zig_0_17 else pkg
-          ) old.nativeBuildInputs;
-        });
+      kwiSrc = kwi-src;
+
+      # Kwi tracks libghostty-vt independently of the Ghostty app, and nixpkgs
+      # lags behind both. Build the library release that Kwi pins in its
+      # Flatpak manifest instead of reusing nixpkgs' snapshot.
+      libghosttyVt = pkgs: pkgs.callPackage ./libghostty-vt.nix { inherit kwiSrc pkgs; };
 
       # Kwi has no release tags yet, so read the CMake project version and mark
       # the build as unstable.
@@ -60,7 +56,7 @@
       overlays.default =
         final: prev:
         let
-          libghostty-vt = overrideLibghosttyVt prev;
+          libghostty-vt = libghosttyVt prev;
         in
         {
           inherit libghostty-vt;

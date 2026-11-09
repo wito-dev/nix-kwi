@@ -3,45 +3,84 @@
 Nix flake for [Kwi](https://invent.kde.org/utilities/kwi), the KDE terminal
 emulator built on Ghostty's `libghostty-vt`.
 
-Kwi has no tagged release yet, so this flake builds upstream `master`. A GitHub
-Actions job refreshes the pin every day and pushes a new `flake.lock` only when
-the build passes.
+Kwi has no tagged release, so this flake builds upstream `master`. A scheduled
+workflow refreshes the pin after the build passes.
 
-## Run it
+## Build
+
+Requires Nix with flakes enabled on `x86_64-linux`.
 
 ```sh
-nix run github:wito-dev/nix-kwi
+nix build github:wito-dev/nix-kwi
 ```
 
-## Use it as an input
+The build produces `result/bin/kwi`. Run it from a graphical KDE or Qt session.
+
+## Use as a flake input
 
 ```nix
 {
-  inputs.kwi = {
-    url = "github:wito-dev/nix-kwi";
-    inputs.nixpkgs.follows = "nixpkgs";
-  };
+  inputs.kwi.url = "github:wito-dev/nix-kwi";
 }
 ```
 
-Then either take the package:
+Take the package:
 
 ```nix
 inputs.kwi.packages.${system}.default
 ```
 
-or the overlay, which adds `pkgs.kwi` and the matching `pkgs.libghostty-vt`:
+Or use the overlay, which adds `pkgs.kwi` and `pkgs.libghostty-vt`:
 
 ```nix
 nixpkgs.overlays = [ inputs.kwi.overlays.default ];
 ```
 
+## Use the FlakeHub Cache
+
+Scheduled builds and main-branch releases populate
+[FlakeHub Cache](https://flakehub.com/cache). Nix selects cache entries by
+store path, so the input can stay on GitHub.
+
+FlakeHub Cache is a paid FlakeHub feature, and cache reads require
+authentication. Without it, the workflows fall back to the GitHub Actions
+cache, which only serves those workflow runs.
+
+1. Install [Determinate Nix](https://docs.determinate.systems/getting-started/individuals/)
+   and log in:
+
+   ```sh
+   determinate-nixd login
+   ```
+
+2. Keep the input pointing at this repository:
+
+   ```nix
+   inputs.kwi.url = "github:wito-dev/nix-kwi";
+   ```
+
+3. Use the flake's locked inputs. A cache hit requires the same store paths:
+
+   ```nix
+   # Do not add this if you want cache hits: it replaces the locked nixpkgs.
+   # inputs.kwi.inputs.nixpkgs.follows = "nixpkgs";
+   ```
+
+   If your `flake.lock` resolves `nixpkgs` or `kwi-src` to a different
+   revision than this flake's lock, the store paths differ and the cache
+   misses. The cache only contains revisions that CI built.
+
+On GitHub Actions, Determinate Nix authenticates with FlakeHub automatically.
+Add `id-token: write` to the job and use the
+[`flakehub-cache-action`](https://github.com/DeterminateSystems/flakehub-cache-action).
+
 ## libghostty-vt
 
-Kwi needs `libghostty-vt` 1.4.0 or newer. nixpkgs still ships an older Ghostty
-snapshot of that library, so the flake rebuilds the library from the Ghostty
-release that nixpkgs already packages. The build needs Zig 0.17, which is why
-the override replaces the Zig version that nixpkgs' `libghostty-vt` uses.
+`libghostty-vt` is released separately from the Ghostty app and has its own
+version numbers. nixpkgs lags behind, so the flake builds the exact release
+that Kwi pins in its own Flatpak manifest. Bumping `kwi-src` therefore also
+follows upstream's library bumps, and the same manifest supplies the Zig
+version the build needs.
 
 ## Update manually
 
@@ -49,3 +88,8 @@ the override replaces the Zig version that nixpkgs' `libghostty-vt` uses.
 nix flake update kwi-src
 nix build
 ```
+
+## License
+
+Kwi is licensed under `GPL-2.0-only OR GPL-3.0-only OR LicenseRef-KDE-Accepted-GPL`.
+See the [upstream project](https://invent.kde.org/utilities/kwi) for details.
