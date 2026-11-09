@@ -38,10 +38,11 @@ nixpkgs.overlays = [ inputs.kwi.overlays.default ];
 
 ## libghostty-vt
 
-Kwi needs `libghostty-vt` 1.4.0 or newer. nixpkgs still ships an older Ghostty
-snapshot of that library, so the flake rebuilds the library from the Ghostty
-release that nixpkgs already packages. The build needs Zig 0.17, which is why
-the override replaces the Zig version that nixpkgs' `libghostty-vt` uses.
+`libghostty-vt` is released separately from the Ghostty app and has its own
+version numbers. nixpkgs lags behind, so the flake builds the exact release
+that Kwi pins in its own Flatpak manifest. Bumping `kwi-src` therefore also
+follows upstream's library bumps, and the same manifest supplies the Zig
+version the build needs.
 
 ## Update manually
 
